@@ -7,6 +7,15 @@ module EventMachine
 
       attr_writer :max_frame_size
 
+      # Show what protocols we're using
+      def protocols
+         if @handler.respond_to?(:protocols)
+          @handler.protocols
+         else
+           raise "Not implemented"
+         end
+      end
+
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
