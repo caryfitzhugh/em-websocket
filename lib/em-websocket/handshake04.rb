@@ -4,19 +4,17 @@ require 'base64'
 module EventMachine
   module WebSocket
     module Handshake04
-      def protocols
-        @protocols
-      end
 
       def handshake
         # Required
         unless key = request['sec-websocket-key']
           raise HandshakeError, "Sec-WebSocket-Key header is required"
         end
+        @protocol = []
 
         # Optional
         origin = request['sec-websocket-origin']
-        @protocols = request['sec-websocket-protocol'].to_s.split(',')
+        protocols = request['sec-websocket-protocol'].to_s.split(',')
         extensions = request['sec-websocket-extensions']
 
         string_to_sign = "#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -28,6 +26,9 @@ module EventMachine
         upgrade << "Sec-WebSocket-Accept: #{signature}"
 
         # TODO: Support Sec-WebSocket-Protocol
+        unless (protocols.blank?)
+          upgrade << "Sec-WebSocket-Protocol: #{(@protocols & protocols).first}"
+        end
         # TODO: Sec-WebSocket-Extensions
 
         debug [:upgrade_headers, upgrade]

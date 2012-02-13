@@ -7,14 +7,6 @@ module EventMachine
 
       attr_writer :max_frame_size
 
-      # Show what protocols we're using
-      def protocols
-         if @handler.respond_to?(:protocols)
-          @handler.protocols
-         else
-           raise "Not implemented"
-         end
-      end
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
@@ -47,6 +39,7 @@ module EventMachine
 
       def initialize(options)
         @options = options
+        @protocols = @options.delete(:protocols) || []
         @debug = options[:debug] || false
         @secure = options[:secure] || false
         @tls_options = options[:tls_options] || {}
@@ -116,7 +109,7 @@ module EventMachine
         else
           debug [:inbound_headers, data]
           @data << data
-          @handler = HandlerFactory.build(self, @data, @secure, @debug)
+          @handler = HandlerFactory.build(self, @data, @secure, @debug, @protocols)
           unless @handler
             # The whole header has not been received yet.
             return false
@@ -198,6 +191,10 @@ module EventMachine
 
       def request
         @handler ? @handler.request : {}
+      end
+
+      def protocol
+        @handler ? @handler.protocol : {}
       end
 
       def state

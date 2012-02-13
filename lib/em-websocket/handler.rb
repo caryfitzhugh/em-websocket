@@ -3,13 +3,15 @@ module EventMachine
     class Handler
       include Debugger
 
-      attr_reader :request, :state
+      attr_reader :request, :state, :protocol
 
-      def initialize(connection, request, debug = false)
+      def initialize(connection, request, debug = false, protocols = [])
         @connection, @request = connection, request
         @debug = debug
         @state = :handshake
         initialize_framing
+        @protocols = protocols
+        @protocol = nil
       end
 
       def run
