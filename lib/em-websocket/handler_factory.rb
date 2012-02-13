@@ -4,7 +4,7 @@ module EventMachine
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*(.+)$/
 
-      def self.build(connection, data, secure = false, debug = false)
+      def self.build(connection, data, secure = false, debug = false, protocols=[])
         (header, remains) = data.split("\r\n\r\n", 2)
         unless remains
           # The whole header has not been received yet.
@@ -33,10 +33,10 @@ module EventMachine
           request[h[1].strip.downcase] = h[2].strip if h
         end
 
-        build_with_request(connection, request, remains, secure, debug)
+        build_with_request(connection, request, remains, secure, debug, protocols)
       end
 
-      def self.build_with_request(connection, request, remains, secure = false, debug = false)
+      def self.build_with_request(connection, request, remains, secure = false, debug = false, protocols=[])
         # Determine version heuristically
         version = if request['sec-websocket-version']
           # Used from drafts 04 onwards
@@ -77,26 +77,26 @@ module EventMachine
 
         case version
         when 75
-          Handler75.new(connection, request, debug)
+          Handler75.new(connection, request, debug, protocols)
         when 76
-          Handler76.new(connection, request, debug)
+          Handler76.new(connection, request, debug, protocols)
         when 1..3
           # We'll use handler03 - I believe they're all compatible
-          Handler03.new(connection, request, debug)
+          Handler03.new(connection, request, debug, protocols)
         when 5
-          Handler05.new(connection, request, debug)
+          Handler05.new(connection, request, debug, protocols)
         when 6
-          Handler06.new(connection, request, debug)
+          Handler06.new(connection, request, debug, protocols)
         when 7
-          Handler07.new(connection, request, debug)
+          Handler07.new(connection, request, debug, protocols)
         when 8
           # drafts 9, 10, 11 and 12 should never change the version
           # number as they are all the same as version 08.
-          Handler08.new(connection, request, debug)
+          Handler08.new(connection, request, debug, protocols)
         when 13
           # drafts 13 to 17 all identify as version 13 as they are
           # only minor changes or text changes.
-          Handler13.new(connection, request, debug)
+          Handler13.new(connection, request, debug, protocols)
         else
           # According to spec should abort the connection
           raise HandshakeError, "Protocol version #{version} not supported"
